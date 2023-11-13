@@ -27,7 +27,7 @@ mod ticket;
 pub use ticket::RustlsSessionTicketer;
 
 mod cert_pair;
-pub use cert_pair::RustlsCertificatePair;
+pub use cert_pair::{RustlsCertificatePair, RustlsCertificatePairBuilder};
 
 mod cert_resolver;
 pub use cert_resolver::MultipleCertResolver;

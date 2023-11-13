@@ -17,21 +17,20 @@
 use std::sync::Arc;
 use std::time::Duration;
 
-use rustls::{Certificate, PrivateKey};
-
 use g3_io_ext::EffectiveCacheHandle;
+use g3_types::net::RustlsCertificatePair;
 
 use super::CacheQueryKey;
 
 #[derive(Clone)]
 pub struct CertAgentHandle {
-    inner: EffectiveCacheHandle<CacheQueryKey, (Vec<Certificate>, PrivateKey)>,
+    inner: EffectiveCacheHandle<CacheQueryKey, RustlsCertificatePair>,
     request_timeout: Duration,
 }
 
 impl CertAgentHandle {
     pub(crate) fn new(
-        inner: EffectiveCacheHandle<CacheQueryKey, (Vec<Certificate>, PrivateKey)>,
+        inner: EffectiveCacheHandle<CacheQueryKey, RustlsCertificatePair>,
         request_timeout: Duration,
     ) -> Self {
         CertAgentHandle {
@@ -40,7 +39,7 @@ impl CertAgentHandle {
         }
     }
 
-    pub async fn fetch(&self, host: String) -> Option<(Vec<Certificate>, PrivateKey)> {
+    pub async fn fetch(&self, host: String) -> Option<RustlsCertificatePair> {
         let query_key = CacheQueryKey { host };
 
         self.inner

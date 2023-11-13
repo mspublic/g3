@@ -19,10 +19,9 @@ use std::net::{IpAddr, SocketAddr};
 use std::sync::Arc;
 use std::time::Duration;
 
-use anyhow::{anyhow, Context};
+use anyhow::Context;
 use hickory_resolver::config::{NameServerConfigGroup, ResolverConfig, ResolverOpts};
 use hickory_resolver::TokioAsyncResolver;
-use rustls::ServerName;
 
 use g3_types::net::{DnsEncryptionConfigBuilder, DnsEncryptionProtocol};
 
@@ -81,37 +80,31 @@ impl TryFrom<&HickoryDriverConfig> for NameServerConfigGroup {
 
     fn try_from(c: &HickoryDriverConfig) -> anyhow::Result<Self> {
         let g = if let Some(ec) = &c.encryption {
-            let tls_name = match ec.tls_name() {
-                ServerName::DnsName(n) => n.as_ref().to_string(),
-                ServerName::IpAddress(ip) => ip.to_string(),
-                v => return Err(anyhow!("unsupported tls server name: {v:?}")), // FIXME add after hickory support it
-            };
-
             let mut g = match ec.protocol() {
                 DnsEncryptionProtocol::Tls => NameServerConfigGroup::from_ips_tls(
                     &c.servers,
                     c.server_port.unwrap_or(853),
-                    tls_name,
+                    ec.tls_name(),
                     false,
                 ),
                 DnsEncryptionProtocol::Https => NameServerConfigGroup::from_ips_https(
                     &c.servers,
                     c.server_port.unwrap_or(443),
-                    tls_name,
+                    ec.tls_name(),
                     false,
                 ),
                 #[cfg(feature = "quic")]
                 DnsEncryptionProtocol::H3 => NameServerConfigGroup::from_ips_h3(
                     &c.servers,
                     c.server_port.unwrap_or(443),
-                    tls_name,
+                    ec.tls_name(),
                     false,
                 ),
                 #[cfg(feature = "quic")]
                 DnsEncryptionProtocol::Quic => NameServerConfigGroup::from_ips_quic(
                     &c.servers,
                     c.server_port.unwrap_or(853),
-                    tls_name,
+                    ec.tls_name(),
                     false,
                 ),
             };

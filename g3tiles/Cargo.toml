@@ -30,6 +30,7 @@ tokio = { workspace = true, features = ["net", "sync", "time"] }
 openssl.workspace = true
 openssl-probe = { workspace = true, optional = true }
 rustls.workspace = true
+rustls-pki-types.workspace = true
 tokio-rustls.workspace = true
 governor = { workspace = true, features = ["std", "jitter"] }
 chrono = { workspace = true, features = ["clock"] }

@@ -23,7 +23,7 @@ use rand::Fill;
 use ring::aead;
 use rustls::server::ProducesTickets;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 struct AeadKey(aead::LessSafeKey);
 
 impl AeadKey {
@@ -81,6 +81,7 @@ impl AeadKey {
     }
 }
 
+#[derive(Debug)]
 struct AeadKeys {
     current: AeadKey,
     previous: Option<AeadKey>,
@@ -108,6 +109,7 @@ impl AeadKeys {
     }
 }
 
+#[derive(Debug)]
 pub struct RustlsSessionTicketer {
     lifetime: u32,
     keys: ArcSwap<AeadKeys>,

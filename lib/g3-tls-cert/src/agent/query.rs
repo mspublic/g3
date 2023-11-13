@@ -24,17 +24,17 @@ use std::time::Duration;
 
 use anyhow::anyhow;
 use log::warn;
-use rustls::{Certificate, PrivateKey};
 use tokio::io::ReadBuf;
 use tokio::net::UdpSocket;
 
 use g3_io_ext::{EffectiveCacheData, EffectiveQueryHandle};
+use g3_types::net::{RustlsCertificatePair, RustlsCertificatePairBuilder};
 
 use super::{CacheQueryKey, CertAgentConfig};
 
 pub(super) struct QueryRuntime {
     socket: UdpSocket,
-    query_handle: EffectiveQueryHandle<CacheQueryKey, (Vec<Certificate>, PrivateKey)>,
+    query_handle: EffectiveQueryHandle<CacheQueryKey, RustlsCertificatePair>,
     read_buffer: Box<[u8]>,
     write_queue: VecDeque<(Arc<CacheQueryKey>, Vec<u8>)>,
     protective_ttl: u32,
@@ -47,7 +47,7 @@ impl QueryRuntime {
     pub(super) fn new(
         config: &CertAgentConfig,
         socket: UdpSocket,
-        query_handle: EffectiveQueryHandle<CacheQueryKey, (Vec<Certificate>, PrivateKey)>,
+        query_handle: EffectiveQueryHandle<CacheQueryKey, RustlsCertificatePair>,
     ) -> Self {
         QueryRuntime {
             socket,
@@ -89,12 +89,11 @@ impl QueryRuntime {
 
     fn parse_rsp(
         map: Vec<(rmpv::ValueRef, rmpv::ValueRef)>,
-    ) -> anyhow::Result<(Arc<CacheQueryKey>, Vec<Certificate>, PrivateKey, u32)> {
+    ) -> anyhow::Result<(Arc<CacheQueryKey>, RustlsCertificatePair, u32)> {
         use anyhow::Context;
 
         let mut host = String::new();
-        let mut cert = Vec::new();
-        let mut pkey = PrivateKey(Vec::new());
+        let mut cert_pair_builder = RustlsCertificatePairBuilder::default();
         let mut ttl: u32 = 0;
 
         for (k, v) in map {
@@ -105,12 +104,14 @@ impl QueryRuntime {
                         .context(format!("invalid string value for key {key}"))?;
                 }
                 "cert" => {
-                    cert = g3_msgpack::value::as_certificates(&v)
+                    let certs = g3_msgpack::value::as_certificates(&v)
                         .context(format!("invalid tls certificate value for key {key}"))?;
+                    cert_pair_builder.set_certs(certs);
                 }
                 "key" => {
-                    pkey = g3_msgpack::value::as_private_key(&v)
+                    let key = g3_msgpack::value::as_private_key(&v)
                         .context(format!("invalid tls private key value for key {key}"))?;
+                    cert_pair_builder.set_key(key);
                 }
                 "ttl" => {
                     ttl = g3_msgpack::value::as_u32(&v)
@@ -123,14 +124,9 @@ impl QueryRuntime {
         if host.is_empty() {
             return Err(anyhow!("no required host key found"));
         }
-        if cert.is_empty() {
-            return Err(anyhow!("no required cert key found"));
-        }
-        if pkey.0.is_empty() {
-            return Err(anyhow!("no required pkey key found"));
-        }
+        let cert_pair = cert_pair_builder.build()?;
 
-        Ok((Arc::new(CacheQueryKey { host }), cert, pkey, ttl))
+        Ok((Arc::new(CacheQueryKey { host }), cert_pair, ttl))
     }
 
     fn handle_rsp(&mut self, len: usize) {
@@ -139,14 +135,14 @@ impl QueryRuntime {
         let mut buf = &self.read_buffer[..len];
         if let Ok(ValueRef::Map(map)) = rmpv::decode::read_value_ref(&mut buf) {
             match Self::parse_rsp(map) {
-                Ok((req_key, cert, key, mut ttl)) => {
+                Ok((req_key, cert_pair, mut ttl)) => {
                     if ttl == 0 {
                         ttl = self.protective_ttl;
                     } else if ttl > self.maximum_ttl {
                         ttl = self.maximum_ttl;
                     }
 
-                    let result = EffectiveCacheData::new((cert, key), ttl, self.vanish_wait);
+                    let result = EffectiveCacheData::new(cert_pair, ttl, self.vanish_wait);
                     self.query_handle.send_rsp_data(req_key, result, false);
                 }
                 Err(e) => {
