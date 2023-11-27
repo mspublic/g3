@@ -20,22 +20,45 @@ use std::time;
 use anyhow::anyhow;
 use arc_swap::ArcSwap;
 use rand::Fill;
-use ring::aead;
 use rustls::server::ProducesTickets;
 
+#[cfg(feature = "aws-lc")]
+use aws_lc_rs::aead;
+#[cfg(not(feature = "aws-lc"))]
+use ring::aead;
+
 #[derive(Clone, Debug)]
-struct AeadKey(aead::LessSafeKey);
+struct AeadKey {
+    #[cfg(feature = "aws-lc")]
+    inner: Arc<aead::LessSafeKey>,
+    #[cfg(not(feature = "aws-lc"))]
+    inner: aead::LessSafeKey,
+}
+
+fn new_inner_key() -> Result<aead::LessSafeKey, rand::Error> {
+    let mut key = [0u8; 32];
+    key.try_fill(&mut rand::thread_rng())?;
+
+    let alg = &aead::CHACHA20_POLY1305;
+    let key = aead::UnboundKey::new(alg, &key).unwrap();
+    Ok(aead::LessSafeKey::new(key))
+}
 
 impl AeadKey {
     /// Make a ticketer with recommended configuration and a random key.
+    #[cfg(feature = "aws-lc")]
     fn new() -> Result<Self, rand::Error> {
-        let mut key = [0u8; 32];
-        key.try_fill(&mut rand::thread_rng())?;
+        let inner = new_inner_key()?;
+        Ok(Self {
+            inner: Arc::new(inner),
+        })
+    }
 
-        let alg = &aead::CHACHA20_POLY1305;
-        let key = aead::UnboundKey::new(alg, &key).unwrap();
-
-        Ok(Self(aead::LessSafeKey::new(key)))
+    /// Make a ticketer with recommended configuration and a random key.
+    #[cfg(not(feature = "aws-lc"))]
+    fn new() -> Result<Self, rand::Error> {
+        let inner = new_inner_key()?;
+        Ok(Self { inner })
     }
 
     /// Encrypt `message` and return the ciphertext.
@@ -47,10 +70,10 @@ impl AeadKey {
         let aad = aead::Aad::empty();
 
         let mut ciphertext =
-            Vec::with_capacity(nonce_buf.len() + message.len() + self.0.algorithm().tag_len());
+            Vec::with_capacity(nonce_buf.len() + message.len() + self.inner.algorithm().tag_len());
         ciphertext.extend(nonce_buf);
         ciphertext.extend(message);
-        self.0
+        self.inner
             .seal_in_place_separate_tag(nonce, aad, &mut ciphertext[nonce_buf.len()..])
             .map(|tag| {
                 ciphertext.extend(tag.as_ref());
@@ -62,7 +85,7 @@ impl AeadKey {
     /// Decrypt `ciphertext` and recover the original message.
     fn decrypt(&self, ciphertext: &[u8]) -> Option<Vec<u8>> {
         // Non-panicking `let (nonce, ciphertext) = ciphertext.split_at(...)`.
-        let nonce = ciphertext.get(..self.0.algorithm().nonce_len())?;
+        let nonce = ciphertext.get(..self.inner.algorithm().nonce_len())?;
         let ciphertext = ciphertext.get(nonce.len()..)?;
 
         // This won't fail since `nonce` has the required length.
@@ -71,7 +94,7 @@ impl AeadKey {
         let mut out = Vec::from(ciphertext);
 
         let plain_len = self
-            .0
+            .inner
             .open_in_place(nonce, aead::Aad::empty(), &mut out)
             .ok()?
             .len();

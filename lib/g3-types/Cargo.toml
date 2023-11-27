@@ -37,6 +37,7 @@ radix_trie = { workspace = true, optional = true }
 rustls = { workspace = true, optional = true }
 rustls-pki-types = { workspace = true, optional = true }
 ring = { version = "0.17", optional = true }
+aws-lc-rs = { version = "1.5.2", optional = true }
 webpki-roots = { version = "0.26", optional = true }
 rustls-native-certs = { version = "0.7", optional = true }
 rustls-pemfile = { workspace = true, optional = true }
@@ -56,6 +57,7 @@ default = []
 auth-crypt = ["dep:digest", "dep:md-5", "dep:sha-1", "dep:blake3", "dep:hex"]
 resolve = ["dep:ahash", "dep:radix_trie", "dep:fastrand"]
 rustls = ["dep:rustls", "dep:rustls-pki-types", "dep:webpki-roots", "dep:rustls-pemfile", "dep:rustls-native-certs", "dep:ahash", "dep:lru", "dep:ring", "dep:arc-swap"]
+aws-lc = ["rustls", "rustls/aws_lc_rs", "dep:aws-lc-rs"]
 openssl = ["dep:openssl", "dep:ahash", "dep:lru", "dep:bytes"]
 tongsuo = ["openssl", "openssl/tongsuo"]
 acl-rule = ["resolve", "dep:ahash", "dep:ip_network", "dep:ip_network_table", "dep:once_cell", "dep:regex", "dep:radix_trie", "proxy"]
