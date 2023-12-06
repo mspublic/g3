@@ -54,7 +54,7 @@ g3-openssl.workspace = true
 rustc_version.workspace = true
 
 [features]
-default = ["hickory", "quic"]
+default = []
 rustls = ["g3-types/rustls", "dep:rustls", "dep:rustls-pki-types", "dep:rustls-pemfile"]
 hickory = ["rustls", "dep:hickory-client", "dep:hickory-proto"]
 quic = ["rustls", "g3-types/quic", "g3-socks/quic", "g3-io-ext/quic", "dep:quinn", "dep:h3", "dep:h3-quinn", "hickory-client?/dns-over-quic", "hickory-proto?/dns-over-h3"]
