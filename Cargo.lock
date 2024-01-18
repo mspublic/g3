@@ -1162,7 +1162,7 @@ dependencies = [
  "chrono",
  "g3-types",
  "rmpv",
- "rustls 0.22.2",
+ "rustls 0.23.0-alpha.0",
  "rustls-pemfile 2.0.0",
  "rustls-pki-types",
  "uuid",
@@ -1350,7 +1350,7 @@ dependencies = [
  "regex",
  "ring",
  "rustc-hash",
- "rustls 0.22.2",
+ "rustls 0.23.0-alpha.0",
  "rustls-native-certs 0.7.0",
  "rustls-pemfile 2.0.0",
  "rustls-pki-types",
@@ -1459,7 +1459,7 @@ dependencies = [
  "quinn",
  "rustc-hash",
  "rustc_version",
- "rustls 0.22.2",
+ "rustls 0.23.0-alpha.0",
  "rustls-pemfile 2.0.0",
  "rustls-pki-types",
  "thiserror",
@@ -1651,7 +1651,7 @@ dependencies = [
  "rmpv",
  "rustc-hash",
  "rustc_version",
- "rustls 0.22.2",
+ "rustls 0.23.0-alpha.0",
  "serde_json",
  "slog",
  "thiserror",
@@ -1759,7 +1759,7 @@ dependencies = [
  "openssl-probe",
  "rand",
  "rustc_version",
- "rustls 0.22.2",
+ "rustls 0.23.0-alpha.0",
  "rustls-pki-types",
  "slog",
  "thiserror",
@@ -2940,9 +2940,8 @@ dependencies = [
 
 [[package]]
 name = "rustls"
-version = "0.22.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e87c9956bd9807afa1f77e0f7594af32566e830e088a5576d27c5b6f30f49d41"
+version = "0.23.0-alpha.0"
+source = "git+https://github.com/rustls/rustls.git#fa81bd23c00d71f1c53509be9ea58701265b0c4d"
 dependencies = [
  "aws-lc-rs",
  "log",
@@ -3397,10 +3396,9 @@ dependencies = [
 [[package]]
 name = "tokio-rustls"
 version = "0.25.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "775e0c0f0adb3a2f22a00c4745d728b479985fc15ee7ca6a2608388c5569860f"
+source = "git+https://github.com/zh-jq/tokio-rustls.git?branch=next#d4df876563924ab2f8102c33a1a2b158d9134456"
 dependencies = [
- "rustls 0.22.2",
+ "rustls 0.23.0-alpha.0",
  "rustls-pki-types",
  "tokio",
 ]

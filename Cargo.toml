@@ -142,7 +142,7 @@ async-trait = "0.1"
 async-recursion = "1.0"
 pin-project = "1.1"
 #
-rustls = "0.22"
+rustls = "0.23.0-alpha.0"
 rustls-pki-types = "1"
 rustls-pemfile = "2"
 tokio-rustls = "0.25"
@@ -233,3 +233,5 @@ debug-assertions = false
 [patch.crates-io]
 quinn-proto = { version = "0.10.6", git = "https://github.com/zh-jq/quinn.git", branch = "ring-0.17" }
 hickory-proto = { version = "0.24.0", git = "https://github.com/hickory-dns/hickory-dns.git", rev = "b0c0566" }
+rustls = { version = "0.23.0-alpha.0", git = "https://github.com/rustls/rustls.git" }
+tokio-rustls = { version = "0.25.0", git = "https://github.com/zh-jq/tokio-rustls.git", branch = "next" }
